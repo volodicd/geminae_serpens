@@ -1,7 +1,7 @@
 name: Deploy Service
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'services/**'
 

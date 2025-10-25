@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  deployment-api:
+    image: serpens-deployment-api:latest
+    build: ./deployment-api
+    container_name: serpens-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./configs:/app/configs:ro
+      - /etc/cloudflared:/etc/cloudflared:rw
+      - /var/www/port-config:/var/www/port-config:rw
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - LOG_LEVEL=INFO
+    networks:
+      - serpens-net
+    labels:
+      - "com.serpens.service=deployment-api"
+      - "com.serpens.critical=true"
+
+networks:
+  serpens-net:
+    external: true

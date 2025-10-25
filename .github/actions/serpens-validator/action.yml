@@ -1,0 +1,36 @@
+name: 'Serpens Config Validator'
+description: 'Validates serpens.yml configuration and security'
+inputs:
+  service:
+    description: 'Service directory name'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pip install pyyaml jsonschema requests dockerfile-parse
+
+    - name: Run validation
+      shell: bash
+      run: |
+        python ${{ github.action_path }}/validate.py ${{ inputs.service }}
+
+    - name: Security scan Dockerfile
+      shell: bash
+      run: |
+        python ${{ github.action_path }}/security_check.py ${{ inputs.service }}
+
+    - name: Scan for vulnerabilities
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'config'
+        scan-ref: 'services/${{ inputs.service }}'
+        exit-code: '1'
+        severity: 'CRITICAL,HIGH'

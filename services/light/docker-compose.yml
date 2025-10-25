@@ -33,7 +33,7 @@ services:
 #       - led-network
 #     environment:
 #       - FLASK_ENV=production
-#       - PYTHONUNBUFFERED=1
+#       - PYTHONUNBUFFERED=1f
 #     restart: unless-stopped
 # 
 # networks:

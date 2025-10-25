@@ -32,7 +32,7 @@ jobs:
 
       - name: Trigger Deployment
         run: |
-          curl -X POST https://api.volodic.com/deploy \
+          curl -X POST https://api.volodic.com/webhook/deploy \
             -H "X-GitHub-Event: push" \
             -H "X-Hub-Signature-256: ${{ github.event.signature }}" \
             -d '{

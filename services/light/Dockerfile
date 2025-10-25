@@ -25,7 +25,7 @@ COPY templates/ templates/
 
 # Create any additional directories if needed
 RUN mkdir -p templates
-
+USER 1000
 # Expose the Flask port
 EXPOSE 5000
 

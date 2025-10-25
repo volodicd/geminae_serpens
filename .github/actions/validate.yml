@@ -1,0 +1,59 @@
+name: Validate Service
+on:
+  pull_request:
+    paths:
+      - 'services/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Find Changed Service
+        id: service
+        run: |
+          SERVICE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^services/' | cut -d'/' -f2 | head -1)
+          echo "service=$SERVICE" >> $GITHUB_OUTPUT
+
+      - name: Validate Config
+        uses: ./.github/actions/serpens-validator
+        with:
+          service: ${{ steps.service.outputs.service }}
+
+      - name: Build Docker Image
+        run: |
+          cd services/${{ steps.service.outputs.service }}
+          docker build -t test-build .
+
+      - name: Test Container
+        run: |
+          # Read config
+          CONFIG=$(yq eval -o=json services/${{ steps.service.outputs.service }}/serpens.yml)
+          PORT=$(echo $CONFIG | jq -r '.routing.port')
+          HEALTH=$(echo $CONFIG | jq -r '.healthcheck.endpoint')
+          
+          # Run container
+          docker run -d --name test -p $PORT:$PORT test-build
+          sleep 10
+          
+          # Check health
+          curl -f http://localhost:$PORT$HEALTH || exit 1
+
+      - name: Memory Test
+        run: |
+          MEMORY=$(yq eval '.resources.memory' services/${{ steps.service.outputs.service }}/serpens.yml)
+          # Check if container stays within memory limit
+          docker stats --no-stream test
+
+      - name: Comment Results
+        uses: actions/github-script@v6
+        if: failure()
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Validation failed! Check the logs for details.'
+            })

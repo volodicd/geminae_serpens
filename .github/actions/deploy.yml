@@ -1,0 +1,29 @@
+name: Deploy Service
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build and Push
+        run: |
+          SERVICE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^services/' | cut -d'/' -f2 | head -1)
+          docker build -t ghcr.io/${{ github.repository_owner }}/$SERVICE:${{ github.sha }} services/$SERVICE
+          docker push ghcr.io/${{ github.repository_owner }}/$SERVICE:${{ github.sha }}
+
+      - name: Trigger Deployment
+        run: |
+          curl -X POST https://your-internal-api/deploy \
+            -H "X-GitHub-Event: push" \
+            -H "X-Hub-Signature-256: ${{ github.event.signature }}" \
+            -d '{
+              "service": "'$SERVICE'",
+              "tag": "${{ github.sha }}",
+              "repo": "${{ github.repository }}"
+            }'

@@ -19,7 +19,7 @@ jobs:
 
       - name: Trigger Deployment
         run: |
-          curl -X POST https://your-internal-api/deploy \
+          curl -X POST https://temp.volodic.com/deploy \
             -H "X-GitHub-Event: push" \
             -H "X-Hub-Signature-256: ${{ github.event.signature }}" \
             -d '{

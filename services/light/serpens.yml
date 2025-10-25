@@ -12,7 +12,7 @@ resources:
   
 deployment:
   replicas: 1                      # For now always 1
-  node_selector: any               # Future: light/heavy
+  #node_selector: any               # Future: light/heavy
   
 healthcheck:
   endpoint: /health

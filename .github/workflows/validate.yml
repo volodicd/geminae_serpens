@@ -17,7 +17,7 @@ jobs:
       - name: Find Changed Service
         id: service
         run: |
-          SERVICE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^services/' | cut -d'/' -f2 | head -1)
+          SERVICE=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^services/' | cut -d'/' -f2 | head -1)
           echo "service=$SERVICE" >> $GITHUB_OUTPUT
 
       - name: Validate Config

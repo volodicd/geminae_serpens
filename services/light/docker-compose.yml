@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  led-remote:
+    build: .
+    container_name: led-remote-control
+    ports:
+      - "5000:5000"
+    # CRITICAL: Use host network for ESP32 discovery
+    network_mode: host
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    volumes:
+      # Optional: Mount logs directory
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Alternative version with bridge network (if host network doesn't work)
+# services:
+#   led-remote-bridge:
+#     build: .
+#     container_name: led-remote-control
+#     ports:
+#       - "5000:5000"
+#     networks:
+#       - led-network
+#     environment:
+#       - FLASK_ENV=production
+#       - PYTHONUNBUFFERED=1
+#     restart: unless-stopped
+# 
+# networks:
+#   led-network:
+#     driver: bridge

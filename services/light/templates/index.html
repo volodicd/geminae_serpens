@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED CONTROL TERMINAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 20% 80%, #00ff4108 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, #00ffff08 0%, transparent 50%),
+                linear-gradient(180deg, #0a0a0a 0%, #0f0f0f 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* CRT Scanlines Effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 0%,
+                rgba(0, 255, 65, 0.03) 50%,
+                transparent 100%
+            );
+            background-size: 100% 3px;
+            animation: scanlines 0.1s linear infinite;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(3px); }
+        }
+
+        /* Screen Flicker */
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            98% { opacity: 0.98; }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 65, 0.3),
+                inset 0 0 50px rgba(0, 255, 65, 0.05);
+            animation: flicker 3s infinite;
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff41, #00ffff, #ff0080, #00ff41);
+            border-radius: 8px;
+            z-index: -1;
+            animation: rainbow-border 4s linear infinite;
+        }
+
+        @keyframes rainbow-border {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        /* Header */
+        .terminal-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #00ff41;
+            padding-bottom: 20px;
+        }
+
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #00ff41;
+            text-shadow: 0 0 20px #00ff41;
+            margin-bottom: 5px;
+            letter-spacing: 3px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+            opacity: 0.8;
+        }
+
+        /* Status Terminal */
+        .status-terminal {
+            background: #000;
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 25px;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+
+        .status-line {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .status-prompt {
+            color: #00ffff;
+            margin-right: 10px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .status-online { 
+            background-color: #00ff41; 
+            box-shadow: 0 0 10px #00ff41;
+        }
+        .status-offline { 
+            background-color: #ff0040; 
+            box-shadow: 0 0 10px #ff0040;
+        }
+
+        /* Section Styling */
+        .control-section {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-left: 3px solid #00ffff;
+            padding-left: 10px;
+        }
+
+        /* Color Wheel */
+        .color-wheel-area {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #colorWheel {
+            border: 2px solid #00ff41;
+            border-radius: 50%;
+            cursor: crosshair;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+            touch-action: none;
+        }
+
+        .current-color-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+
+        .color-preview {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #00ff41;
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .color-info {
+            flex: 1;
+            margin-left: 15px;
+            text-align: left;
+        }
+
+        .rgb-values {
+            font-size: 0.9rem;
+            color: #00ffff;
+        }
+
+        /* Preset Colors Grid */
+        .favorites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .favorite-color {
+            width: 45px;
+            height: 45px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .favorite-color:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+            transform: scale(1.05);
+        }
+
+        .favorite-color.removable::after {
+            content: '×';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff0040;
+            color: #fff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid #000;
+        }
+
+        .btn-terminal {
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 8px 16px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-terminal:hover {
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            text-shadow: 0 0 10px #00ff41;
+        }
+
+        /* Effects Grid */
+        .effects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px;
+        }
+
+        .effect-button {
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border: 1px solid #333;
+            color: #ccc;
+            padding: 12px 8px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .effect-button:hover {
+            border-color: #00ffff;
+            color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .effect-button.active {
+            background: linear-gradient(145deg, #003d1a, #00261a);
+            border-color: #00ff41;
+            color: #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+            text-shadow: 0 0 10px #00ff41;
+        }
+
+        .effect-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #333;
+        }
+
+        /* Gradient Controls */
+        .gradient-control {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px dashed #333;
+            border-radius: 4px;
+        }
+
+        .gradient-swatch {
+            width: 70px;
+            height: 70px;
+            border: 2px solid #333;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .gradient-swatch:hover {
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .gradient-swatch::before {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .gradient-arrow {
+            font-size: 1.5rem;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        /* Control Sliders */
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .control-label {
+            min-width: 100px;
+            font-size: 0.9rem;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .slider-container {
+            flex: 1;
+            margin: 0 15px;
+            position: relative;
+        }
+
+        .terminal-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #1a1a1a;
+            outline: none;
+            -webkit-appearance: none;
+            border: 1px solid #333;
+        }
+
+        .terminal-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00ff41;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            border: 2px solid #000;
+        }
+
+        .terminal-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00ff41;
+            cursor: pointer;
+            border: 2px solid #000;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
+
+        .value-display {
+            min-width: 50px;
+            text-align: right;
+            font-family: 'Orbitron', monospace;
+            color: #00ff41;
+            font-weight: bold;
+        }
+
+        /* Music Mode (Disabled) */
+        .disabled-section {
+            opacity: 0.3;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .disabled-section::before {
+            content: 'SYSTEM OFFLINE';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 64, 0.9);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        /* Messages */
+        .terminal-message {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            border-left: 3px solid;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .terminal-message.show {
+            opacity: 1;
+        }
+
+        .terminal-message.success {
+            background: rgba(0, 255, 65, 0.1);
+            border-left-color: #00ff41;
+            color: #00ff41;
+        }
+
+        .terminal-message.error {
+            background: rgba(255, 0, 64, 0.1);
+            border-left-color: #ff0040;
+            color: #ff0040;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .title {
+                font-size: 1.6rem;
+                letter-spacing: 2px;
+            }
+
+            #colorWheel {
+                width: 200px !important;
+                height: 200px !important;
+            }
+
+            .effects-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .gradient-control {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .gradient-arrow {
+                transform: rotate(90deg);
+            }
+
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .control-label {
+                min-width: auto;
+                text-align: center;
+            }
+
+            .slider-container {
+                margin: 0;
+            }
+        }
+
+        /* Glowing effects for interactive elements */
+        .glow-on-hover {
+            transition: all 0.3s ease;
+        }
+
+        .glow-on-hover:hover {
+            text-shadow: 0 0 10px currentColor;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Terminal Header -->
+        <div class="terminal-header">
+            <div class="title">LED CONTROL TERMINAL</div>
+            <div class="subtitle">Advanced RGB Lighting Management System</div>
+        </div>
+
+        <!-- System Status -->
+        <div class="status-terminal">
+            <div class="status-line">
+                <span class="status-prompt">SYSTEM STATUS:</span>
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Initializing connection...</span>
+            </div>
+            <div class="status-line">
+                <span class="status-prompt">DEVICE ID:</span>
+                <span>{{ device_id }}</span>
+            </div>
+            <div class="status-line">
+                <span class="status-prompt">SESSION TIME:</span>
+                <span id="sessionTime">00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Color Selection -->
+        <div class="control-section">
+            <div class="section-title">Color Matrix</div>
+            <div class="color-wheel-area">
+                <canvas id="colorWheel" width="280" height="280"></canvas>
+                <div class="current-color-display">
+                    <div class="color-preview" id="colorPreview"></div>
+                    <div class="color-info">
+                        <div style="color: #00ffff; font-size: 0.8rem; margin-bottom: 3px;">CURRENT COLOR</div>
+                        <div class="rgb-values">RGB: <span id="rgbDisplay">255, 255, 255</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorite Colors -->
+        <div class="control-section">
+            <div class="section-title">Color Memory Bank</div>
+            <div class="favorites-grid" id="favoritesGrid"></div>
+            <button class="btn-terminal glow-on-hover" onclick="addCurrentColorToFavorites()">
+                Store Current Color
+            </button>
+        </div>
+
+        <!-- Effect Controls -->
+        <div class="control-section">
+            <div class="section-title">Effect Protocols</div>
+            <div class="effects-grid">
+                <button class="effect-button active" data-effect="0">Static</button>
+                <button class="effect-button" data-effect="1">Rainbow</button>
+                <button class="effect-button" data-effect="2">Gradient</button>
+                <button class="effect-button" data-effect="3">Strobe</button>
+                <button class="effect-button" data-effect="4">Breathing</button>
+                <button class="effect-button" data-effect="5">Power Off</button>
+            </div>
+        </div>
+
+        <!-- Gradient Configuration -->
+        <div class="control-section" id="gradientSection" style="display: none;">
+            <div class="section-title">Gradient Configuration</div>
+            <div class="gradient-control">
+                <div class="gradient-swatch" id="gradientColor1" data-label="Color A" onclick="selectGradientColor(1)"></div>
+                <div class="gradient-arrow">→</div>
+                <div class="gradient-swatch" id="gradientColor2" data-label="Color B" onclick="selectGradientColor(2)"></div>
+            </div>
+            <div style="text-align: center; font-size: 0.8rem; color: #666; margin-top: 10px;">
+                Click color swatches to modify • Changes apply automatically
+            </div>
+        </div>
+
+        <!-- System Controls -->
+        <div class="control-section">
+            <div class="section-title">System Parameters</div>
+            
+            <div class="control-row">
+                <div class="control-label">Brightness</div>
+                <div class="slider-container">
+                    <input type="range" class="terminal-slider" id="brightness" min="1" max="100" value="100">
+                </div>
+                <div class="value-display"><span id="brightnessValue">100</span>%</div>
+            </div>
+
+            <div class="control-row">
+                <div class="control-label">Speed</div>
+                <div class="slider-container">
+                    <input type="range" class="terminal-slider" id="speed" min="1" max="100" value="50">
+                </div>
+                <div class="value-display"><span id="speedValue">50</span>%</div>
+            </div>
+        </div>
+
+        <!-- Music Mode (Disabled) -->
+        <div class="control-section disabled-section">
+            <div class="section-title">Audio Reactive Mode</div>
+            <button class="effect-button" disabled>
+                Initialize Music Mode
+            </button>
+            <div style="text-align: center; font-size: 0.7rem; color: #666; margin-top: 10px;">
+                Audio analysis module currently under development
+            </div>
+        </div>
+
+        <!-- System Messages -->
+        <div class="terminal-message" id="systemMessage"></div>
+    </div>
+
+    <script>
+        // Global state management
+        let systemState = {
+            currentColor: { r: 255, g: 255, b: 255 },
+            currentEffect: 0,
+            gradientColors: [{ r: 255, g: 0, b: 0 }, { r: 0, g: 0, b: 255 }],
+            favorites: [],
+            isSelectingGradient: false,
+            gradientColorIndex: 1,
+            deviceId: '{{ device_id }}',
+            connected: false,
+            sessionStart: Date.now()
+        };
+
+        // Load preferences from server
+        const preferences = {{ preferences | safe }};
+        
+        // Session timer
+        function updateSessionTime() {
+            const elapsed = Date.now() - systemState.sessionStart;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            
+            document.getElementById('sessionTime').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Initialize system
+        function initializeSystem() {
+            systemState.currentColor = preferences.last_color || { r: 255, g: 255, b: 255 };
+            systemState.currentEffect = preferences.last_effect || 0;
+            systemState.favorites = preferences.favorites || [];
+            systemState.gradientColors = preferences.gradient_colors || [{ r: 255, g: 0, b: 0 }, { r: 0, g: 0, b: 255 }];
+            
+            // Update UI elements
+            document.getElementById('brightness').value = preferences.brightness || 100;
+            document.getElementById('speed').value = preferences.speed || 50;
+            document.getElementById('brightnessValue').textContent = preferences.brightness || 100;
+            document.getElementById('speedValue').textContent = preferences.speed || 50;
+            
+            updateColorDisplay();
+            updateGradientDisplay();
+            renderFavorites();
+            setActiveEffect(systemState.currentEffect);
+            
+            // Start session timer
+            setInterval(updateSessionTime, 1000);
+        }
+
+        // Enhanced Color Wheel with better aesthetics
+        class RetroColorWheel {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.centerX = canvas.width / 2;
+                this.centerY = canvas.height / 2;
+                this.radius = Math.min(this.centerX, this.centerY) - 20;
+                
+                this.render();
+                this.setupInteraction();
+            }
+
+            render() {
+                const imageData = this.ctx.createImageData(this.canvas.width, this.canvas.height);
+                const data = imageData.data;
+
+                for (let x = 0; x < this.canvas.width; x++) {
+                    for (let y = 0; y < this.canvas.height; y++) {
+                        const dx = x - this.centerX;
+                        const dy = y - this.centerY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance <= this.radius) {
+                            const angle = (Math.atan2(dy, dx) + Math.PI) * 180 / Math.PI;
+                            const saturation = distance / this.radius;
+                            const rgb = this.hsvToRgb(angle, saturation, 1);
+
+                            const index = (y * this.canvas.width + x) * 4;
+                            data[index] = rgb.r;
+                            data[index + 1] = rgb.g;
+                            data[index + 2] = rgb.b;
+                            data[index + 3] = 255;
+                        }
+                    }
+                }
+
+                this.ctx.putImageData(imageData, 0, 0);
+                
+                // Add retro grid overlay
+                this.addGridOverlay();
+            }
+
+            addGridOverlay() {
+                this.ctx.strokeStyle = 'rgba(0, 255, 65, 0.1)';
+                this.ctx.lineWidth = 1;
+                
+                // Concentric circles
+                for (let r = this.radius / 4; r <= this.radius; r += this.radius / 4) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.centerX, this.centerY, r, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+                
+                // Radial lines
+                for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.centerX, this.centerY);
+                    this.ctx.lineTo(
+                        this.centerX + Math.cos(angle) * this.radius,
+                        this.centerY + Math.sin(angle) * this.radius
+                    );
+                    this.ctx.stroke();
+                }
+            }
+
+            hsvToRgb(h, s, v) {
+                h = h / 60;
+                const c = v * s;
+                const x = c * (1 - Math.abs((h % 2) - 1));
+                const m = v - c;
+
+                let r, g, b;
+                if (h < 1) { r = c; g = x; b = 0; }
+                else if (h < 2) { r = x; g = c; b = 0; }
+                else if (h < 3) { r = 0; g = c; b = x; }
+                else if (h < 4) { r = 0; g = x; b = c; }
+                else if (h < 5) { r = x; g = 0; b = c; }
+                else { r = c; g = 0; b = x; }
+
+                return {
+                    r: Math.round((r + m) * 255),
+                    g: Math.round((g + m) * 255),
+                    b: Math.round((b + m) * 255)
+                };
+            }
+
+            getColorAtPosition(x, y) {
+                const dx = x - this.centerX;
+                const dy = y - this.centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= this.radius) {
+                    const angle = (Math.atan2(dy, dx) + Math.PI) * 180 / Math.PI;
+                    const saturation = Math.min(distance / this.radius, 1);
+                    return this.hsvToRgb(angle, saturation, 1);
+                }
+                return null;
+            }
+
+            setupInteraction() {
+                const getPosition = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                    return {
+                        x: clientX - rect.left,
+                        y: clientY - rect.top
+                    };
+                };
+
+                const handleSelection = (e) => {
+                    e.preventDefault();
+                    const pos = getPosition(e);
+                    const color = this.getColorAtPosition(pos.x, pos.y);
+                    
+                    if (color) {
+                        if (systemState.isSelectingGradient) {
+                            systemState.gradientColors[systemState.gradientColorIndex - 1] = color;
+                            updateGradientDisplay();
+                            setGradientColors();
+                            systemState.isSelectingGradient = false;
+                            showMessage('Gradient color updated', 'success');
+                        } else {
+                            systemState.currentColor = color;
+                            updateColorDisplay();
+                            setColor(color);
+                        }
+                    }
+                };
+
+                this.canvas.addEventListener('click', handleSelection);
+                this.canvas.addEventListener('touchstart', handleSelection);
+            }
+        }
+
+        // Update color display
+        function updateColorDisplay() {
+            const preview = document.getElementById('colorPreview');
+            const rgbDisplay = document.getElementById('rgbDisplay');
+            
+            const { r, g, b } = systemState.currentColor;
+            preview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            rgbDisplay.textContent = `${r}, ${g}, ${b}`;
+        }
+
+        // Update gradient display
+        function updateGradientDisplay() {
+            const color1 = systemState.gradientColors[0];
+            const color2 = systemState.gradientColors[1];
+            
+            document.getElementById('gradientColor1').style.backgroundColor = 
+                `rgb(${color1.r}, ${color1.g}, ${color1.b})`;
+            document.getElementById('gradientColor2').style.backgroundColor = 
+                `rgb(${color2.r}, ${color2.g}, ${color2.b})`;
+        }
+
+        // Render favorites with retro styling
+        function renderFavorites() {
+            const grid = document.getElementById('favoritesGrid');
+            grid.innerHTML = '';
+
+            systemState.favorites.forEach((favorite, index) => {
+                const element = document.createElement('div');
+                element.className = 'favorite-color';
+                if (index >= 6) element.className += ' removable';
+                
+                element.style.backgroundColor = `rgb(${favorite.r}, ${favorite.g}, ${favorite.b})`;
+                element.title = favorite.name || `RGB(${favorite.r}, ${favorite.g}, ${favorite.b})`;
+                
+                element.onclick = (e) => {
+                    if (e.target.className.includes('removable') && e.offsetX > 30) {
+                        removeFavorite(index);
+                    } else {
+                        systemState.currentColor = { r: favorite.r, g: favorite.g, b: favorite.b };
+                        updateColorDisplay();
+                        setColor(systemState.currentColor);
+                    }
+                };
+                
+                grid.appendChild(element);
+            });
+        }
+
+        // Add current color to favorites
+        function addCurrentColorToFavorites() {
+            if (systemState.favorites.length >= 20) {
+                showMessage('Memory bank full - maximum 20 colors allowed', 'error');
+                return;
+            }
+
+            const newFavorite = {
+                name: `Slot ${systemState.favorites.length + 1}`,
+                ...systemState.currentColor
+            };
+
+            systemState.favorites.push(newFavorite);
+            renderFavorites();
+            updateFavorites();
+            showMessage('Color stored in memory bank', 'success');
+        }
+
+        // Remove favorite
+        function removeFavorite(index) {
+            if (index >= 6) {
+                systemState.favorites.splice(index, 1);
+                renderFavorites();
+                updateFavorites();
+                showMessage('Color removed from memory', 'success');
+            }
+        }
+
+        // Effect management
+        function setActiveEffect(effectId) {
+            document.querySelectorAll('.effect-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const activeBtn = document.querySelector(`[data-effect="${effectId}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+            
+            // Toggle gradient section
+            document.getElementById('gradientSection').style.display = 
+                effectId == 2 ? 'block' : 'none';
+        }
+
+        // Gradient color selection
+        function selectGradientColor(colorIndex) {
+            systemState.gradientColorIndex = colorIndex;
+            systemState.isSelectingGradient = true;
+            showMessage(`Select color ${colorIndex === 1 ? 'A' : 'B'} from the color matrix`, 'success');
+        }
+
+        // API Communications
+        async function setColor(color) {
+            try {
+                const response = await fetch('/api/color', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(color)
+                });
+                const result = await response.json();
+                if (!result.success) {
+                    showMessage('Color update failed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Communication error', 'error');
+            }
+        }
+
+        async function setEffect(effectId) {
+            try {
+                const response = await fetch('/api/effect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ effect: effectId })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    systemState.currentEffect = effectId;
+                    setActiveEffect(effectId);
+                    showMessage(`Effect protocol ${effectId} activated`, 'success');
+                } else {
+                    showMessage('Effect change failed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Communication error', 'error');
+            }
+        }
+
+        async function setBrightness(brightness) {
+            try {
+                const response = await fetch('/api/brightness', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ brightness: brightness })
+                });
+                if (!response.ok) {
+                    throw new Error('Brightness adjustment failed');
+                }
+            } catch (error) {
+                showMessage('Brightness control error', 'error');
+            }
+        }
+
+        async function setSpeed(speed) {
+            try {
+                const response = await fetch('/api/speed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ speed: speed })
+                });
+                if (!response.ok) {
+                    throw new Error('Speed adjustment failed');
+                }
+            } catch (error) {
+                showMessage('Speed control error', 'error');
+            }
+        }
+
+        async function setGradientColors() {
+            try {
+                const response = await fetch('/api/gradient', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        color1: systemState.gradientColors[0],
+                        color2: systemState.gradientColors[1]
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    setEffect(2); // Auto-switch to gradient
+                } else {
+                    showMessage('Gradient setup failed: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Communication error', 'error');
+            }
+        }
+
+        async function updateFavorites() {
+            try {
+                await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', favorites: systemState.favorites })
+                });
+            } catch (error) {
+                console.error('Failed to sync favorites:', error);
+            }
+        }
+
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const result = await response.json();
+                
+                if (result.success) {
+                    systemState.connected = true;
+                    document.getElementById('statusIndicator').className = 'status-indicator status-online';
+                    document.getElementById('statusText').textContent = 'Hardware connected and operational';
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                systemState.connected = false;
+                document.getElementById('statusIndicator').className = 'status-indicator status-offline';
+                document.getElementById('statusText').textContent = 'Hardware connection lost';
+                
+                // Auto-recovery attempt
+                setTimeout(async () => {
+                    try {
+                        await fetch('/api/discover', { method: 'POST' });
+                    } catch (e) {}
+                }, 5000);
+            }
+        }
+
+        // Show system messages
+        function showMessage(text, type) {
+            const message = document.getElementById('systemMessage');
+            message.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            message.className = `terminal-message ${type} show`;
+            
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 4000);
+        }
+
+        // System initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize color wheel
+            new RetroColorWheel(document.getElementById('colorWheel'));
+
+            // Load system state
+            initializeSystem();
+
+            // Setup effect buttons
+            document.querySelectorAll('.effect-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const effectId = parseInt(btn.dataset.effect);
+                    setEffect(effectId);
+                });
+            });
+
+            // Setup brightness control
+            document.getElementById('brightness').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('brightnessValue').textContent = value;
+                setBrightness(parseInt(value));
+            });
+
+            // Setup speed control
+            document.getElementById('speed').addEventListener('input', (e) => {
+                const value = e.target.value;
+                document.getElementById('speedValue').textContent = value;
+                setSpeed(parseInt(value));
+            });
+
+            // Start system monitoring
+            checkSystemStatus();
+            setInterval(checkSystemStatus, 30000);
+
+            // Show initialization complete
+            setTimeout(() => {
+                showMessage('LED Control Terminal initialized successfully', 'success');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

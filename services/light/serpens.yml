@@ -1,0 +1,31 @@
+version: '1.0'
+service:
+  name: light
+  image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/light:${TAG}
+  
+routing:
+  domain: light.volodic.com
+  port: 5000
+
+resources:
+  memory: 128m                     # Required
+  
+deployment:
+  replicas: 1                      # For now always 1
+  node_selector: any               # Future: light/heavy
+  
+healthcheck:
+  endpoint: /health
+  port: 8080
+  initial_delay: 10s
+  interval: 30s
+  timeout: 5s
+  retries: 3
+
+environment:                       # Optional
+  - LOG_LEVEL=info
+  
+volumes:                          # Optional
+  - name: data
+    path: /app/data
+    size: 1Gi

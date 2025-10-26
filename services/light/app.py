@@ -338,6 +338,12 @@ def turn_on():
     result = send_esp32_request('on')
     return jsonify(result)
 
+
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok", "esp32_connected": ESP32_IP is not None})
+
+
 if __name__ == '__main__':
     print("🎨 LED Color Controller Web App")
     print("=" * 40)

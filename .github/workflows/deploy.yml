@@ -53,7 +53,7 @@ jobs:
           }'
 
           # Get the secret from GitHub Actions Secrets
-          SECRET="${{ secrets.DEPLOYMENT_SECRET }}"
+          SECRET="${{ secrets.DEPLOY_WEBHOOK_SECRET }}"
 
           # Save payload to file for accurate signing
           echo -n "$PAYLOAD" > /tmp/payload.json

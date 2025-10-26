@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 class SwarmDeployer:
     def __init__(self):
         self.client = docker.from_env()
-        
     async def deploy(self, service_name: str, config: dict, tag: str) -> bool:
         """Deploy service to Docker Swarm"""
         try:

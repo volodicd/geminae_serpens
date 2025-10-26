@@ -5,6 +5,7 @@ services:
     image: serpens-deployment-api:latest
     build: ./deployment-api
     container_name: serpens-api
+#    command: sleep infinity
     restart: unless-stopped
     ports:
       - "8000:8000"

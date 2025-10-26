@@ -3,7 +3,6 @@ FROM python:3.10-slim
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    docker.io \
     sudo \
     && rm -rf /var/lib/apt/lists/*
 
@@ -19,9 +18,10 @@ COPY . /app/
 
 # Create volume mount points
 VOLUME ["/app/configs", "/etc/cloudflared", "/var/www/port-config"]
-
+ARG DOCKER_GID=987
 # Run as non-root user
-RUN useradd -m -s /bin/bash serpens && \
+RUN groupadd -g ${DOCKER_GID} docker &&\
+    useradd -m -s /bin/bash serpens && \
     usermod -aG docker serpens && \
     usermod -aG sudo serpens && \
     echo 'serpens ALL=(ALL) NOPASSWD: /bin/systemctl restart cloudflared' >> /etc/sudoers

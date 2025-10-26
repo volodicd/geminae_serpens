@@ -15,8 +15,8 @@ deployment:
   #node_selector: any               # Future: light/heavy
   
 healthcheck:
-  endpoint: /health
-  port: 8080
+  endpoint: /api/status
+  port: 5000
   initial_delay: 10s
   interval: 30s
   timeout: 5s

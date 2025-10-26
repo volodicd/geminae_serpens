@@ -4,7 +4,9 @@ on:
     paths:
       - 'services/**'
 permissions:
+  contents: read
   issues: write
+  pull-requests: write
 
 jobs:
   validate:
@@ -19,6 +21,11 @@ jobs:
         run: |
           SERVICE=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '^services/' | cut -d'/' -f2 | head -1)
           echo "service=$SERVICE" >> $GITHUB_OUTPUT
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
 
       - name: Validate Config
         uses: ./.github/actions/serpens-validator
@@ -50,14 +57,20 @@ jobs:
           # Check if container stays within memory limit
           docker stats --no-stream test
 
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f test || true
+
       - name: Comment Results
         uses: actions/github-script@v6
-        if: failure()
+        if: failure() && steps.service.conclusion == 'success'
         with:
           script: |
+            const service = '${{ steps.service.outputs.service }}';
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ Validation failed! Check the logs for details.'
+              body: `❌ Validation failed for service: **${service}**\n\nCheck the workflow logs for details.`
             })

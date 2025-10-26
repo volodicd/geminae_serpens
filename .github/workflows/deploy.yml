@@ -34,36 +34,29 @@ jobs:
 
       - name: Trigger Deployment
         run: |
-          set -e # Exit immediately if a command fails
+          set -e
           
           SERVICE="${{ steps.build.outputs.service }}"
           
-          # Define the payload to match what the API expects
-          PAYLOAD='{
-            "action": "deployment",
-            "deployment": {
-              "payload": {
-                "service": "'$SERVICE'",
-                "tag": "${{ github.sha }}"
-              }
-            },
-            "repository": {
-              "full_name": "${{ github.repository }}"
-            }
-          }'
+          # Create compact JSON (no spaces/newlines)
+          PAYLOAD='{"action":"deployment","deployment":{"payload":{"service":"'$SERVICE'","tag":"${{ github.sha }}"}},"repository":{"full_name":"${{ github.repository }}"}}'
 
-          # Get the secret from GitHub Actions Secrets
-          SECRET="${{ secrets.DEPLOY_WEBHOOK_SECRET }}"
+          # Get the secret
+          SECRET="${{ secrets.DEPLOYMENT_SECRET }}"
 
-          # Save payload to file for accurate signing
+          # Save payload to file
           echo -n "$PAYLOAD" > /tmp/payload.json
 
-          # Calculate the HMAC SHA256 signature from the file
+          # Calculate signature
           SIGNATURE="sha256=$(openssl dgst -sha256 -hmac "$SECRET" /tmp/payload.json | awk '{print $2}')"
 
-          # Send the request with the calculated signature
-          curl -X POST https://api.volodic.com/webhook/deploy \
+          # Send request
+          curl -v -X POST https://api.volodic.com/webhook/deploy \
             -H "X-GitHub-Event: push" \
             -H "X-Hub-Signature-256: $SIGNATURE" \
             -H "Content-Type: application/json" \
             -d @/tmp/payload.json
+          
+          # Show what we sent
+          echo "Payload sent:"
+          cat /tmp/payload.json

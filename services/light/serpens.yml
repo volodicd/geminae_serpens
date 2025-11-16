@@ -15,7 +15,7 @@ deployment:
   #node_selector: any               # Future: light/heavy
   
 healthcheck:
-  endpoint: /health
+  endpoint: /health # test commit
   port: 5000
   initial_delay: 10s
   interval: 30s
